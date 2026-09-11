@@ -1,5 +1,7 @@
 package main
 
+//go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate --provider-name aptabase --examples-dir ../examples --rendered-website-dir ../docs --website-source-dir ../templates
+
 import (
 	"context"
 	"flag"
