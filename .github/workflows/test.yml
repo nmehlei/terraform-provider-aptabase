@@ -41,6 +41,8 @@ jobs:
       - name: Start disposable aptabase-plus environment
         working-directory: tests/acceptance
         run: ./up.sh
+      - name: Wait for services to stabilize
+        run: sleep 10
       - name: Run acceptance tests
         env:
           TF_ACC: "1"
