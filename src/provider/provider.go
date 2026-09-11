@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	datasourceschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
@@ -128,50 +127,3 @@ func (p *AptabaseProvider) DataSources(_ context.Context) []func() datasource.Da
 	}
 }
 
-// Stub resources and data sources below are placeholders for Tasks 6-9.
-//
-// They cannot simply panic() in their constructor or in Metadata/Schema:
-// terraform-plugin-framework's GetProviderSchema handler unconditionally
-// instantiates every registered resource/data source and calls Metadata and
-// Schema on it to assemble the full provider schema (see
-// fwserver.Server.ResourceFuncs / ResourceSchemas), so a panic there breaks
-// schema discovery for the whole provider - including Task 4's own
-// TestProvider_Metadata_ReportsAptabaseTypeName test. Panicking is therefore
-// deferred to the CRUD/Read methods, which are only invoked once Terraform
-// actually operates on the resource/data source - not implemented until the
-// task named in each panic message.
-//
-// Each task that implements one of these for real (app_resource.go etc.)
-// deletes the corresponding stub and its constructor below.
-
-type stubAppDataSource struct{ notImplementedUntil string }
-
-func (d *stubAppDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_app"
-}
-func (d *stubAppDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasourceschema.Schema{}
-}
-func (d *stubAppDataSource) Read(_ context.Context, _ datasource.ReadRequest, _ *datasource.ReadResponse) {
-	panic(d.notImplementedUntil)
-}
-
-func NewAppDataSource() datasource.DataSource {
-	return &stubAppDataSource{notImplementedUntil: "implemented in Task 9"}
-}
-
-type stubAppsDataSource struct{ notImplementedUntil string }
-
-func (d *stubAppsDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_apps"
-}
-func (d *stubAppsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	resp.Schema = datasourceschema.Schema{}
-}
-func (d *stubAppsDataSource) Read(_ context.Context, _ datasource.ReadRequest, _ *datasource.ReadResponse) {
-	panic(d.notImplementedUntil)
-}
-
-func NewAppsDataSource() datasource.DataSource {
-	return &stubAppsDataSource{notImplementedUntil: "implemented in Task 9"}
-}
