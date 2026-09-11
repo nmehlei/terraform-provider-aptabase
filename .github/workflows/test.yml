@@ -44,7 +44,7 @@ jobs:
       - name: Run acceptance tests
         env:
           TF_ACC: "1"
-        run: go test -race -v ./tests/acceptance/...
+        run: go test -race -v -parallel 1 ./tests/acceptance/...
       - name: Tear down disposable aptabase-plus environment
         if: always()
         working-directory: tests/acceptance
