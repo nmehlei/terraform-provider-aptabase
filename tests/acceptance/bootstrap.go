@@ -115,6 +115,9 @@ func Bootstrap(t *testing.T) (string, string) {
 		t.Fatalf("decoding api key response: %v", err)
 	}
 
+	// Add delay to prevent rate-limiting when multiple tests run in sequence
+	time.Sleep(2 * time.Second)
+
 	return aptabasePlusURL, created.Key
 }
 
