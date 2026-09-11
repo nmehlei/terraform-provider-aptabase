@@ -13,11 +13,32 @@ import (
 	"io"
 	"net/http"
 	"net/http/cookiejar"
+	"os"
 	"regexp"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+
+	"github.com/nmehlei/terraform-provider-aptabase/src/provider"
 )
+
+// RequireTFAcc skips the test unless TF_ACC=1, matching
+// terraform-plugin-testing's own convention.
+func RequireTFAcc(t *testing.T) {
+	t.Helper()
+	if os.Getenv("TF_ACC") == "" {
+		t.Skip("set TF_ACC=1 to run acceptance tests (requires a running aptabase-plus stack, see up.sh)")
+	}
+}
+
+// ProviderFactories wires the "aptabase" provider into
+// terraform-plugin-testing's resource.Test harness.
+var ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
+	"aptabase": providerserver.NewProtocol6WithError(provider.New("acctest")()),
+}
 
 const (
 	// Ports match the host-side mappings in docker-compose.yml, which
