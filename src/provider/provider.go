@@ -145,31 +145,6 @@ func (p *AptabaseProvider) DataSources(_ context.Context) []func() datasource.Da
 // Each task that implements one of these for real (app_resource.go etc.)
 // deletes the corresponding stub and its constructor below.
 
-type stubAppShareResource struct{ notImplementedUntil string }
-
-func (r *stubAppShareResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_app_share"
-}
-func (r *stubAppShareResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = resourceschema.Schema{}
-}
-func (r *stubAppShareResource) Create(_ context.Context, _ resource.CreateRequest, _ *resource.CreateResponse) {
-	panic(r.notImplementedUntil)
-}
-func (r *stubAppShareResource) Read(_ context.Context, _ resource.ReadRequest, _ *resource.ReadResponse) {
-	panic(r.notImplementedUntil)
-}
-func (r *stubAppShareResource) Update(_ context.Context, _ resource.UpdateRequest, _ *resource.UpdateResponse) {
-	panic(r.notImplementedUntil)
-}
-func (r *stubAppShareResource) Delete(_ context.Context, _ resource.DeleteRequest, _ *resource.DeleteResponse) {
-	panic(r.notImplementedUntil)
-}
-
-func NewAppShareResource() resource.Resource {
-	return &stubAppShareResource{notImplementedUntil: "implemented in Task 7"}
-}
-
 type stubApiKeyResource struct{ notImplementedUntil string }
 
 func (r *stubApiKeyResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
