@@ -51,6 +51,7 @@ services:
       SMTP_HOST: mailcatcher
       SMTP_PORT: "1025"
       SMTP_FROM_ADDRESS: "noreply@example.com"
+      RATE_LIMIT_ENABLED: "false"
     # Remapped to 18080 on the host; 8080 is free but kept distinct
     # alongside the other remapped ports above for consistency.
     ports: ["18080:8080"]
