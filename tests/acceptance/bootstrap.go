@@ -60,12 +60,31 @@ func Bootstrap(t *testing.T) (string, string) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	registerBody := fmt.Sprintf(`{"name":"Acceptance Test","email":%q}`, email)
-	resp, err := client.Post(aptabasePlusURL+"/api/_auth/register", "application/json", strings.NewReader(registerBody))
-	if err != nil {
-		t.Fatalf("register: %v", err)
-	}
-	resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
+	var resp *http.Response
+	var err error
+
+	// Retry register with backoff to handle rate-limiting
+	maxRetries := 5
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		resp, err = client.Post(aptabasePlusURL+"/api/_auth/register", "application/json", strings.NewReader(registerBody))
+		if err != nil {
+			t.Fatalf("register: %v", err)
+		}
+		resp.Body.Close()
+
+		if resp.StatusCode == http.StatusOK {
+			break
+		}
+
+		// If we got rate-limited (429) or service unavailable (503), retry with backoff
+		if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode == http.StatusServiceUnavailable {
+			if attempt < maxRetries-1 {
+				backoff := time.Duration((1 << uint(attempt)) * 100) * time.Millisecond
+				time.Sleep(backoff)
+				continue
+			}
+		}
+
 		t.Fatalf("register: unexpected status %d", resp.StatusCode)
 	}
 
