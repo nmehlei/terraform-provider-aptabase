@@ -126,4 +126,3 @@ func (p *AptabaseProvider) DataSources(_ context.Context) []func() datasource.Da
 		NewAppsDataSource,
 	}
 }
-

@@ -79,7 +79,7 @@ func Bootstrap(t *testing.T) (string, string) {
 		// If we got rate-limited (429) or service unavailable (503), retry with backoff
 		if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode == http.StatusServiceUnavailable {
 			if attempt < maxRetries-1 {
-				backoff := time.Duration((1 << uint(attempt)) * 500) * time.Millisecond
+				backoff := time.Duration((1<<uint(attempt))*500) * time.Millisecond
 				time.Sleep(backoff)
 				continue
 			}
