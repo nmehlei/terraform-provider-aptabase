@@ -21,7 +21,7 @@ provider "aptabase" {
 
 func TestAccAppResource_CreateUpdateImport(t *testing.T) {
 	acceptance.RequireTFAcc(t)
-	endpoint, token := acceptance.Bootstrap(t)
+	endpoint, token := acceptance.SharedBootstrap(t)
 
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: acceptance.ProviderFactories,

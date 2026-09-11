@@ -16,6 +16,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -63,9 +64,13 @@ func Bootstrap(t *testing.T) (string, string) {
 	var resp *http.Response
 	var err error
 
-	// Retry register with backoff to handle rate-limiting
-	maxRetries := 15
-	maxBackoff := 30 * time.Second
+	// Retry register with a short backoff to ride out transient hiccups
+	// (e.g. the stack still settling right after startup). This is no
+	// longer defending against the SignUp rate limit itself - callers are
+	// expected to go through SharedBootstrap so registration happens at
+	// most once per test binary run, well under the 4/hour/IP limit.
+	const maxRetries = 3
+	const maxBackoff = 5 * time.Second
 	for attempt := 0; attempt < maxRetries; attempt++ {
 		resp, err = client.Post(aptabasePlusURL+"/api/_auth/register", "application/json", strings.NewReader(registerBody))
 		if err != nil {
@@ -77,12 +82,10 @@ func Bootstrap(t *testing.T) (string, string) {
 			break
 		}
 
-		// If we got rate-limited (429) or service unavailable (503), retry with backoff
+		// Retry on rate-limited (429) or service unavailable (503).
 		if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode == http.StatusServiceUnavailable {
 			if attempt < maxRetries-1 {
-				// Exponential backoff capped at maxBackoff
-				backoffMs := time.Duration((1 << uint(attempt)) * 1000)
-				backoff := time.Duration(backoffMs) * time.Millisecond
+				backoff := time.Duration(1<<uint(attempt)) * time.Second
 				if backoff > maxBackoff {
 					backoff = maxBackoff
 				}
@@ -121,10 +124,34 @@ func Bootstrap(t *testing.T) (string, string) {
 		t.Fatalf("decoding api key response: %v", err)
 	}
 
-	// Add delay to prevent rate-limiting when multiple tests run in sequence
-	time.Sleep(2 * time.Second)
-
 	return aptabasePlusURL, created.Key
+}
+
+var (
+	sharedBootstrapOnce     sync.Once
+	sharedBootstrapEndpoint string
+	sharedBootstrapAPIKey   string
+)
+
+// SharedBootstrap is like Bootstrap, but registers only ONE account for the
+// entire test binary run (guarded by sync.Once) and hands the same
+// endpoint+apiKey to every caller. aptabase-plus rate-limits account
+// sign-ups to 4/hour/IP, so acceptance tests that don't need a distinct
+// account of their own should call this instead of Bootstrap to avoid
+// exhausting that limit in CI, where there's no way to reset the in-memory
+// limiter between runs.
+func SharedBootstrap(t *testing.T) (endpoint, apiKey string) {
+	t.Helper()
+
+	sharedBootstrapOnce.Do(func() {
+		sharedBootstrapEndpoint, sharedBootstrapAPIKey = Bootstrap(t)
+	})
+
+	if sharedBootstrapEndpoint == "" || sharedBootstrapAPIKey == "" {
+		t.Fatal("SharedBootstrap: shared account was not established (earlier Bootstrap call must have failed)")
+	}
+
+	return sharedBootstrapEndpoint, sharedBootstrapAPIKey
 }
 
 // newCookieClient returns an http.Client that persists cookies across
