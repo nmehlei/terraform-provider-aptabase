@@ -55,7 +55,17 @@ services:
     # alongside the other remapped ports above for consistency.
     ports: ["18080:8080"]
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/healthz"]
+      # The aspnet base image (Debian) has neither wget nor curl, only
+      # bash - confirmed by `docker exec ... which wget` returning
+      # nothing. Use bash's /dev/tcp instead of a missing HTTP client.
+      test:
+        - CMD
+        - bash
+        - -c
+        - >-
+          exec 3<>/dev/tcp/localhost/8080 &&
+          printf 'GET /healthz HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
+          head -1 <&3 | grep -q '200'
       interval: 2s
       timeout: 5s
       retries: 30
