@@ -3,6 +3,7 @@ package aptabase
 import (
 	"context"
 	"net/http"
+	"net/url"
 )
 
 // Share is an email-based app share.
@@ -20,9 +21,9 @@ func (c *Client) ListShares(ctx context.Context, appID string) ([]Share, error) 
 }
 
 func (c *Client) AddShare(ctx context.Context, appID, email string) error {
-	return c.do(ctx, http.MethodPut, appsPath+appID+"/shares/"+email, nil, nil)
+	return c.do(ctx, http.MethodPut, appsPath+appID+"/shares/"+url.PathEscape(email), nil, nil)
 }
 
 func (c *Client) RemoveShare(ctx context.Context, appID, email string) error {
-	return c.do(ctx, http.MethodDelete, appsPath+appID+"/shares/"+email, nil, nil)
+	return c.do(ctx, http.MethodDelete, appsPath+appID+"/shares/"+url.PathEscape(email), nil, nil)
 }

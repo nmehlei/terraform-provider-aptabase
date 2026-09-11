@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -108,6 +109,11 @@ func (r *AppShareResource) Read(ctx context.Context, req resource.ReadRequest, r
 
 	shares, err := r.client.ListShares(ctx, state.AppID.ValueString())
 	if err != nil {
+		var apiErr *aptabase.APIError
+		if errors.As(err, &apiErr) && apiErr.NotFound() {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("Error Reading Aptabase App Shares", err.Error())
 		return
 	}
@@ -120,6 +126,9 @@ func (r *AppShareResource) Read(ctx context.Context, req resource.ReadRequest, r
 		}
 	}
 	if !found {
+		// aptabase-plus's list endpoints are unpaginated (verified against the
+		// server source); if that changes, this inference breaks and could
+		// destructively recreate resources still past page one.
 		resp.State.RemoveResource(ctx)
 		return
 	}
@@ -141,6 +150,10 @@ func (r *AppShareResource) Delete(ctx context.Context, req resource.DeleteReques
 	}
 
 	if err := r.client.RemoveShare(ctx, state.AppID.ValueString(), state.Email.ValueString()); err != nil {
+		var apiErr *aptabase.APIError
+		if errors.As(err, &apiErr) && apiErr.NotFound() {
+			return
+		}
 		resp.Diagnostics.AddError("Error Deleting Aptabase App Share", err.Error())
 	}
 }

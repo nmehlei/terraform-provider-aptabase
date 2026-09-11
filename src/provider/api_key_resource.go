@@ -149,10 +149,15 @@ func (r *ApiKeyResource) Read(ctx context.Context, req resource.ReadRequest, res
 		}
 	}
 	if !found {
+		// aptabase-plus's list endpoints are unpaginated (verified against the
+		// server source); if that changes, this inference breaks and could
+		// destructively recreate resources still past page one.
 		resp.State.RemoveResource(ctx)
 		return
 	}
 
+	// ExpiresAt is intentionally not reconciled from the list response here -
+	// the attribute is RequiresReplace, so undetected drift on it is low-stakes.
 	// Key is intentionally not overwritten - the list endpoint never
 	// returns it, only the create response does.
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)

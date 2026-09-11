@@ -34,7 +34,7 @@ services:
     ports: ["11080:1080"]
 
   aptabase-plus:
-    image: ghcr.io/nmehlei/aptabase-plus:latest
+    image: ghcr.io/nmehlei/aptabase-plus:v0.1.534
     depends_on:
       postgres:
         condition: service_healthy
