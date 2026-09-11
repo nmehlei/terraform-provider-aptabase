@@ -1,0 +1,51 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: test -z "$(gofmt -l .)"
+      - run: go build ./...
+      - run: go vet ./...
+      - run: go test -race ./tests/unit/...
+
+  acceptance:
+    name: acceptance tests (disposable aptabase-plus)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+      - name: Start disposable aptabase-plus environment
+        working-directory: tests/acceptance
+        run: ./up.sh
+      - name: Run acceptance tests
+        env:
+          TF_ACC: "1"
+        run: go test -race -v ./tests/acceptance/...
+      - name: Tear down disposable aptabase-plus environment
+        if: always()
+        working-directory: tests/acceptance
+        run: ./down.sh
