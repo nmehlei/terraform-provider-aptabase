@@ -64,7 +64,7 @@ func Bootstrap(t *testing.T) (string, string) {
 	var err error
 
 	// Retry register with backoff to handle rate-limiting
-	maxRetries := 5
+	maxRetries := 10
 	for attempt := 0; attempt < maxRetries; attempt++ {
 		resp, err = client.Post(aptabasePlusURL+"/api/_auth/register", "application/json", strings.NewReader(registerBody))
 		if err != nil {
@@ -79,7 +79,7 @@ func Bootstrap(t *testing.T) (string, string) {
 		// If we got rate-limited (429) or service unavailable (503), retry with backoff
 		if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode == http.StatusServiceUnavailable {
 			if attempt < maxRetries-1 {
-				backoff := time.Duration((1 << uint(attempt)) * 100) * time.Millisecond
+				backoff := time.Duration((1 << uint(attempt)) * 500) * time.Millisecond
 				time.Sleep(backoff)
 				continue
 			}
